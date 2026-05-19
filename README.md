@@ -16,6 +16,15 @@ npm install
 npm run dev
 ```
 
+**One-time engine setup** (after `npm install` in frontend):
+
+```bash
+cp frontend/node_modules/stockfish/bin/stockfish-18-lite-single.wasm \
+   frontend/public/engine/
+```
+
+The `.wasm` file (7 MB) is excluded from git. The `.js` wrapper and proxy are committed.
+
 Open http://localhost:5173
 
 ## What's built
