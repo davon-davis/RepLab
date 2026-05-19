@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:3001/api/chesscom'
+const BASE = '/api/chesscom'
 
 export interface ChesscomProfile {
   username: string
