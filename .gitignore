@@ -33,3 +33,9 @@ Thumbs.db
 
 # Stockfish WASM binaries (large — copy from node_modules/stockfish/bin/ after npm install)
 *.wasm
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
