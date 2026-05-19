@@ -3,18 +3,26 @@ import { PgnImport } from './features/game-review/PgnImport'
 import { ChesscomImport } from './features/game-review/ChesscomImport'
 import { GameReview } from './features/game-review/GameReview'
 import type { ParsedGame } from './lib/chess'
-
-type View = 'import' | 'review'
+import { OpeningCatalog } from './features/opening-reps/OpeningCatalog'
+import type { Opening } from './lib/chess/openings'
+import { OpeningDrill } from './features/opening-reps/OpeningDrill'
+type View = 'import' | 'review' | 'openings' | 'drill'
 type ImportMode = 'chesscom' | 'paste'
 
 export default function App() {
   const [view, setView] = useState<View>('import')
   const [importMode, setImportMode] = useState<ImportMode>('chesscom')
   const [game, setGame] = useState<ParsedGame | null>(null)
+  const [selectedOpening, setSelectedOpening] = useState<Opening | null>(null)
 
   function handleGameLoaded(g: ParsedGame) {
     setGame(g)
     setView('review')
+  }
+
+  function handleOpeningSelect(o: Opening) {
+    setSelectedOpening(o)
+    setView('drill')
   }
 
   return (
@@ -33,23 +41,34 @@ export default function App() {
           </div>
 
           <nav className="flex items-center gap-1">
-            {(['Game Review', 'Drills', 'Openings', 'Dashboard'] as const).map((label, i) => (
-              <button
-                key={label}
-                onClick={() => i === 0 && setView(game ? 'review' : 'import')}
-                className={`px-3 py-1.5 text-sm font-display rounded-lg transition-colors
-                  ${i === 0 && (view === 'import' || view === 'review')
-                    ? 'text-gray-200 bg-replab-surface'
-                    : i === 0
-                      ? 'text-gray-400 hover:text-gray-200'
-                      : 'text-gray-600 cursor-not-allowed'
-                  }`}
-                title={i > 0 ? 'Coming soon' : ''}
-              >
-                {label}
-                {i > 0 && <span className="ml-1 text-xs opacity-40">soon</span>}
-              </button>
-            ))}
+            {(['Game Review', 'Drills', 'Openings', 'Dashboard'] as const).map((label, i) => {
+              const active =
+                (i === 0 && (view === 'import' || view === 'review')) ||
+                (i === 2 && (view === 'openings' || view === 'drill'))
+              const enabled = i === 0 || i === 2
+              function handleClick() {
+                if (i === 0) setView(game ? 'review' : 'import')
+                if (i === 2) setView('openings')
+              }
+              return (
+                <button
+                  key={label}
+                  onClick={handleClick}
+                  disabled={!enabled}
+                  className={`px-3 py-1.5 text-sm font-display rounded-lg transition-colors
+                    ${active
+                      ? 'text-gray-200 bg-replab-surface'
+                      : enabled
+                        ? 'text-gray-400 hover:text-gray-200'
+                        : 'text-gray-600 cursor-not-allowed'
+                    }`}
+                  title={!enabled ? 'Coming soon' : ''}
+                >
+                  {label}
+                  {!enabled && <span className="ml-1 text-xs opacity-40">soon</span>}
+                </button>
+              )
+            })}
           </nav>
         </div>
       </header>
@@ -100,6 +119,17 @@ export default function App() {
               <PgnImport onGameLoaded={handleGameLoaded} />
             )}
           </div>
+        )}
+
+{view === 'openings' && (
+          <OpeningCatalog onSelect={handleOpeningSelect} />
+        )}
+
+        {view === 'drill' && selectedOpening && (
+          <OpeningDrill
+            opening={selectedOpening}
+            onBack={() => setView('openings')}
+          />
         )}
 
         {view === 'review' && game && (
