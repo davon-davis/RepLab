@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Chessboard } from 'react-chessboard'
-import type { ParsedGame, MoveData } from '../../lib/chess'
-import { formatGameTitle, getOpeningName } from '../../lib/chess'
-import { useAnalysis, type MoveEval } from '../../lib/useAnalysis'
-import { useLiveEval } from '../../lib/useLiveEval'
-import { EvalBar } from './EvalBar'
+import type { ParsedGame, MoveData } from '../utils/chess'
+import { formatGameTitle, getOpeningName } from '../utils/chess'
+import { useAnalysis, type MoveEval } from '../hooks/useAnalysis'
+import { useLiveEval } from '../hooks/useLiveEval'
+import { EvalBar } from '../components/EvalBar'
 
 interface GameReviewProps {
   game: ParsedGame

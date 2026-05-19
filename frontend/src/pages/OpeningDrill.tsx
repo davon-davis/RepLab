@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
-import type { Opening } from '../../lib/chess/openings'
-import { useAiExplanation } from './useAiExplanation'
+import type { Opening } from '../utils/chess/openings'
+import { useAiExplanation } from '../hooks/useAiExplanation'
 
 interface OpeningDrillProps {
   opening: Opening

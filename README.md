@@ -34,36 +34,57 @@ Open http://localhost:5173
 - PGN import — drag-and-drop a `.pgn` file, use the file picker, or paste directly; "Try sample" button for quick testing
 
 **Game review**
-- Step through every move with keyboard (←→↑↓) or click moves in the list
-- Move highlighting on the board, player names + Elo displayed
-- Board flip, opening name, result, time control info
+- Stockfish 18 analysis runs automatically in a Web Worker — eval bar updates per position
+- Step through every move with keyboard (←→↑↓) or click the move list
+- Move classification: blunder (??), mistake (?), inaccuracy (?!) with color-coded dots
+- Per-player summary (blunders / mistakes / inaccuracies) shown after analysis completes
+- Live eval on the current position while analysis catches up
+- Board flip, opening name, result, time control, player names + Elo
+
+**Opening drills**
+- Catalog of 9 openings (Ruy Lopez, Queen's Gambit, Sicilian Najdorf, King's Indian, London, French, Caro-Kann, Italian, King's Gambit) with filter by color and difficulty
+- Drag or click pieces on the board — app auto-plays opponent moves
+- Hint and move explanation powered by Claude (AI chess coach, 2–4 sentences, focused on the why)
+- Progress bar, move breadcrumb, shake animation on wrong moves
 
 ## File structure
 
 ```
 backend/
   src/
-    index.js                           # Express entry point (port 3001)
-    routes/chesscom.js                 # Proxy routes to Chess.com public API
-    services/chesscom.js               # Fetch wrapper + game summarizer
+    index.js                    # Express entry point (port 3001)
+    routes/chesscom.js          # Proxy routes to Chess.com public API
+    services/chesscom.js        # Fetch wrapper + game summarizer
 
 frontend/
+  public/
+    engine/                     # Stockfish WASM + JS wrapper + proxy worker
   src/
-    App.tsx                            # Root, nav, tab switcher, view routing
-    lib/
-      chess/index.ts                   # PGN parser, chess utils
-      api/chesscom.ts                  # Typed client for the backend
-    features/
-      game-review/
-        ChesscomImport.tsx             # Username → month → time class → game list
-        PgnImport.tsx                  # Paste / drag-and-drop / file picker
-        GameReview.tsx                 # Board + move list + controls
+    App.tsx                     # Root, nav, view routing
+    api/
+      chesscom.ts               # Typed client for the backend proxy
+    pages/
+      GameReview.tsx            # Board + eval bar + move list + analysis summary
+      OpeningCatalog.tsx        # Filterable opening grid
+      OpeningDrill.tsx          # Interactive drill with AI hints
+    components/
+      ChesscomImport.tsx        # Username → month → time class → game list
+      PgnImport.tsx             # Paste / drag-and-drop / file picker
+      EvalBar.tsx               # Vertical centipawn / mate bar
+    hooks/
+      useAnalysis.ts            # Stockfish full-game analysis (priority queue)
+      useLiveEval.ts            # Single-position live eval
+      useAiExplanation.ts       # Claude API — move hints and explanations
+    utils/
+      chess/
+        index.ts                # PGN parser, chess utilities
+        openings.ts             # Opening definitions (SAN lines + player/opponent indices)
+      engineWorker.ts           # UCI helpers, score normalization
 ```
 
 ## Next milestones
 
-- [ ] M3: Stockfish evaluation per move (eval bar)
-- [ ] M4: Mistake detection + blunder classification
-- [ ] M5: Mistake drill mode (retry positions you got wrong)
-- [ ] M6: Spaced repetition (SM-2) for drills
-- [ ] M7: Weakness dashboard
+- [ ] Mistake drill mode (retry positions you got wrong)
+- [ ] Spaced repetition (SM-2) for opening lines
+- [ ] Weakness dashboard
+- [ ] Multi-line opening support

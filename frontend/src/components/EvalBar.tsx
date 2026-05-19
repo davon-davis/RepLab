@@ -1,5 +1,5 @@
-import type { EvalScore } from '../../lib/useAnalysis'
-import { formatEval } from '../../lib/useAnalysis'
+import type { EvalScore } from '../hooks/useAnalysis'
+import { formatEval } from '../hooks/useAnalysis'
 
 interface EvalBarProps {
   score: EvalScore | null

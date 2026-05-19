@@ -1,5 +1,5 @@
 import { useState, useRef, DragEvent } from 'react'
-import { parsePgn, type ParsedGame } from '../../lib/chess'
+import { parsePgn, type ParsedGame } from '../utils/chess'
 
 const SAMPLE_PGN = `[Event "Rated Blitz game"]
 [Site "Chess.com"]

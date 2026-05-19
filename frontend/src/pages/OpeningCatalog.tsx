@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { OPENINGS, type Opening } from '../../lib/chess/openings'
+import { OPENINGS, type Opening } from '../utils/chess/openings'
 
 interface OpeningCatalogProps {
   onSelect: (opening: Opening) => void

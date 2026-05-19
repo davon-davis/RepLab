@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { EvalScore } from './engineWorker'
-import { createEngineLineHandler, parseScoreLine } from './engineWorker'
+import type { EvalScore } from '../utils/engineWorker'
+import { createEngineLineHandler, parseScoreLine } from '../utils/engineWorker'
 
 const MOVETIME_MS = 200
 

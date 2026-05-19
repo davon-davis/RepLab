@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ParsedGame } from './chess'
+import type { ParsedGame } from '../utils/chess'
 import {
   createEngineLineHandler,
   gameKey,
   parseScoreLine,
   type EvalScore,
-} from './engineWorker'
+} from '../utils/engineWorker'
 
 export type { EvalScore }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { parsePgn, type ParsedGame } from '../../lib/chess'
+import { parsePgn, type ParsedGame } from '../utils/chess'
 import {
   verifyProfile,
   getArchives,
@@ -8,7 +8,7 @@ import {
   archiveToYearMonth,
   type ChesscomProfile,
   type ChesscomGameSummary,
-} from '../../lib/api/chesscom'
+} from '../api/chesscom'
 
 interface ChesscomImportProps {
   onGameLoaded: (game: ParsedGame) => void
