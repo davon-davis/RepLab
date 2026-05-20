@@ -23,33 +23,32 @@ export function OpeningCatalog({ onSelect }: OpeningCatalogProps) {
   )
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="mx-auto max-w-5xl">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="font-display text-3xl font-medium text-gray-100 mb-2">Openings</h1>
-        <p className="text-gray-500 font-display">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="mb-2 font-display text-2xl font-medium text-gray-100 sm:text-3xl">Openings</h1>
+        <p className="font-display text-sm text-gray-500 sm:text-base">
           Choose an opening to drill. You'll play moves on the board — the app plays the opponent's responses automatically.
         </p>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <div className="flex gap-1">
+      <div className="mb-6 flex flex-col gap-3">
+        <div className="-mx-1 flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {(['all', 'white', 'black'] as const).map(c => (
             <FilterChip key={c} active={filterColor === c} onClick={() => setFilterColor(c)}>
               {c === 'all' ? 'All colors' : COLOR_LABELS[c]}
             </FilterChip>
           ))}
         </div>
-        <div className="w-px h-5 bg-replab-border" />
-        <div className="flex gap-1">
+        <div className="-mx-1 flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {(['all', 'beginner', 'intermediate', 'advanced'] as const).map(d => (
             <FilterChip key={d} active={filterDiff === d} onClick={() => setFilterDiff(d)}>
               {d === 'all' ? 'All levels' : d.charAt(0).toUpperCase() + d.slice(1)}
             </FilterChip>
           ))}
         </div>
-        <span className="ml-auto text-xs text-gray-600 font-display">
+        <span className="font-display text-xs text-gray-600">
           {filtered.length} opening{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -126,7 +125,7 @@ function FilterChip({ active, onClick, children }: {
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-lg text-xs font-display transition-colors
+      className={`shrink-0 rounded-lg px-3 py-1.5 font-display text-xs transition-colors
         ${active
           ? 'bg-replab-accent text-white'
           : 'border border-replab-border text-gray-400 hover:text-gray-200 hover:border-replab-accent/50'

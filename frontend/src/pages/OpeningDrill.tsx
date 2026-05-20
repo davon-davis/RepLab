@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useBoardWidth } from '../hooks/useBoardWidth'
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import type { Opening } from '../utils/chess/openings'
@@ -12,6 +13,8 @@ interface OpeningDrillProps {
 type DrillState = 'waiting' | 'correct' | 'wrong' | 'opponent' | 'complete'
 
 export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
+  const boardContainerRef = useRef<HTMLDivElement>(null)
+  const boardWidth = useBoardWidth(boardContainerRef, 480, 0)
   const line = opening.lines[0] // start with first line
   const playingAs = opening.color
   const isPlayerMove = useCallback((idx: number) => line.playerMoves.includes(idx), [line])
@@ -155,9 +158,9 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6 lg:flex-row">
       {/* Board column */}
-      <div className="flex flex-col gap-3 lg:w-[480px] shrink-0">
+      <div className="flex w-full shrink-0 flex-col gap-3 lg:max-w-[480px]">
         {/* Opponent label */}
         <div className="flex items-center gap-2 px-1">
           <div className={`w-3.5 h-3.5 rounded-sm ${playingAs === 'white' ? 'bg-gray-800 border border-gray-600' : 'bg-[#eeeed2] border border-gray-400'}`} />
@@ -167,10 +170,13 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
         </div>
 
         {/* Board */}
-        <div className={`rounded-xl overflow-hidden border transition-all duration-150
+        <div
+          ref={boardContainerRef}
+          className={`mx-auto w-full max-w-[480px] overflow-hidden rounded-xl border transition-all duration-150 lg:mx-0
           ${shake ? 'border-replab-blunder' : 'border-replab-border'}
           ${drillState === 'correct' ? 'border-replab-good/60' : ''}
-        `}>
+        `}
+        >
           <Chessboard
             position={fen}
             boardOrientation={boardOrientation}
@@ -179,7 +185,7 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
             customDarkSquareStyle={{ backgroundColor: '#769656' }}
             customLightSquareStyle={{ backgroundColor: '#eeeed2' }}
             arePiecesDraggable={drillState === 'waiting'}
-            boardWidth={480}
+            boardWidth={boardWidth}
           />
         </div>
 
@@ -192,27 +198,23 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
         </div>
 
         {/* Controls */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={handleHint}
             disabled={drillState !== 'waiting' || hintRequested || explanationLoading}
-            className="flex-1 py-2.5 px-4 border border-replab-accent/40 hover:border-replab-accent
-                       text-replab-accent hover:bg-replab-accent/10 font-display text-sm rounded-lg
-                       transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="min-w-[calc(50%-0.25rem)] flex-1 rounded-lg border border-replab-accent/40 px-4 py-2.5 font-display text-sm text-replab-accent transition-all hover:border-replab-accent hover:bg-replab-accent/10 disabled:cursor-not-allowed disabled:opacity-40 sm:min-w-0"
           >
             💡 Hint
           </button>
           <button
             onClick={handleReset}
-            className="px-4 py-2.5 border border-replab-border hover:border-replab-accent/50
-                       text-gray-400 hover:text-gray-200 font-display text-sm rounded-lg transition-colors"
+            className="min-w-[calc(50%-0.25rem)] flex-1 rounded-lg border border-replab-border px-4 py-2.5 font-display text-sm text-gray-400 transition-colors hover:border-replab-accent/50 hover:text-gray-200 sm:min-w-0 sm:flex-none"
           >
             ↺ Restart
           </button>
           <button
             onClick={onBack}
-            className="px-4 py-2.5 border border-replab-border hover:border-replab-accent/50
-                       text-gray-400 hover:text-gray-200 font-display text-sm rounded-lg transition-colors"
+            className="w-full rounded-lg border border-replab-border px-4 py-2.5 font-display text-sm text-gray-400 transition-colors hover:border-replab-accent/50 hover:text-gray-200 sm:w-auto sm:flex-none"
           >
             ← Back
           </button>
@@ -222,11 +224,11 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
       {/* Info column */}
       <div className="flex flex-col gap-4 flex-1 min-w-0">
         {/* Opening header */}
-        <div className="bg-replab-surface border border-replab-border rounded-xl p-5">
-          <div className="flex items-start justify-between mb-2">
+        <div className="rounded-xl border border-replab-border bg-replab-surface p-4 sm:p-5">
+          <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs text-gray-500 font-display mb-1">{opening.eco} · Playing as {playingAs}</p>
-              <h2 className="font-display font-medium text-xl text-gray-100">{opening.name}</h2>
+              <h2 className="font-display text-lg font-medium text-gray-100 sm:text-xl">{opening.name}</h2>
             </div>
             <span className={`text-xs font-display px-2 py-1 rounded-full border
               ${{ beginner: 'text-replab-good border-replab-good/30',

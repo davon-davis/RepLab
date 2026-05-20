@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Chessboard } from 'react-chessboard'
 import type { ParsedGame, MoveData } from '../utils/chess'
 import { formatGameTitle, getOpeningName } from '../utils/chess'
 import { useAnalysis, type MoveEval } from '../hooks/useAnalysis'
 import { useLiveEval } from '../hooks/useLiveEval'
 import { EvalBar } from '../components/EvalBar'
+import { useBoardWidth } from '../hooks/useBoardWidth'
 
 interface GameReviewProps {
   game: ParsedGame
@@ -19,6 +20,8 @@ const CLASSIFICATION_STYLES: Record<string, { dot: string; symbol: string }> = {
 }
 
 export function GameReview({ game, onReset }: GameReviewProps) {
+  const boardContainerRef = useRef<HTMLDivElement>(null)
+  const boardWidth = useBoardWidth(boardContainerRef)
   const [currentIndex, setCurrentIndex] = useState(-1)
   const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white')
   const positionIndex = currentIndex + 1
@@ -82,9 +85,9 @@ export function GameReview({ game, onReset }: GameReviewProps) {
   })
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 w-full max-w-6xl mx-auto">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 lg:flex-row">
       {/* Board column */}
-      <div className="flex flex-col gap-3 shrink-0">
+      <div className="flex w-full shrink-0 flex-col gap-3 lg:w-auto">
         <PlayerTag
           name={boardOrientation === 'white' ? blackPlayer : whitePlayer}
           elo={boardOrientation  === 'white' ? blackElo    : whiteElo}
@@ -92,19 +95,25 @@ export function GameReview({ game, onReset }: GameReviewProps) {
           result={result}
         />
 
-        <div className="flex gap-2 items-stretch">
-          <EvalBar score={currentEval} orientation={boardOrientation} height={480} />
-          <div className="rounded-xl overflow-hidden border border-replab-border">
-            <Chessboard
-              position={currentFen}
-              boardOrientation={boardOrientation}
-              customSquareStyles={getMoveHighlight()}
-              customDarkSquareStyle={{ backgroundColor: '#769656' }}
-              customLightSquareStyle={{ backgroundColor: '#eeeed2' }}
-              areArrowsAllowed={false}
-              arePiecesDraggable={false}
-              boardWidth={480}
+        <div ref={boardContainerRef} className="mx-auto w-full max-w-[480px] lg:mx-0">
+          <div className="flex items-stretch gap-2">
+            <EvalBar
+              score={currentEval}
+              orientation={boardOrientation}
+              height={boardWidth}
             />
+            <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-replab-border">
+              <Chessboard
+                position={currentFen}
+                boardOrientation={boardOrientation}
+                customSquareStyles={getMoveHighlight()}
+                customDarkSquareStyle={{ backgroundColor: '#769656' }}
+                customLightSquareStyle={{ backgroundColor: '#eeeed2' }}
+                areArrowsAllowed={false}
+                arePiecesDraggable={false}
+                boardWidth={boardWidth}
+              />
+            </div>
           </div>
         </div>
 
@@ -125,32 +134,30 @@ export function GameReview({ game, onReset }: GameReviewProps) {
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-center gap-1 sm:justify-start">
             <NavButton onClick={() => goTo(-1)}             title="Start (↑)">⏮</NavButton>
             <NavButton onClick={() => goTo(currentIndex-1)} title="Previous (←)">◀</NavButton>
             <NavButton onClick={() => goTo(currentIndex+1)} title="Next (→)">▶</NavButton>
             <NavButton onClick={() => goTo(totalMoves-1)}   title="End (↓)">⏭</NavButton>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <button
               onClick={() => setBoardOrientation(o => o === 'white' ? 'black' : 'white')}
-              className="px-3 py-1.5 text-xs font-display text-gray-400 hover:text-gray-200
-                         border border-replab-border hover:border-replab-accent/50 rounded-lg transition-colors"
+              className="rounded-lg border border-replab-border px-3 py-1.5 font-display text-xs text-gray-400 transition-colors hover:border-replab-accent/50 hover:text-gray-200"
             >
               ⇅ Flip
             </button>
             <button
               onClick={onReset}
-              className="px-3 py-1.5 text-xs font-display text-gray-400 hover:text-gray-200
-                         border border-replab-border hover:border-replab-accent/50 rounded-lg transition-colors"
+              className="rounded-lg border border-replab-border px-3 py-1.5 font-display text-xs text-gray-400 transition-colors hover:border-replab-accent/50 hover:text-gray-200"
             >
               ← New game
             </button>
           </div>
         </div>
 
-        <div className="text-xs text-gray-500 font-display text-center">
+        <div className="text-center font-display text-xs text-gray-500">
           {currentIndex === -1
             ? 'Starting position · use ←→ keys or click moves'
             : `Move ${game.moves[currentIndex].moveNumber}${game.moves[currentIndex].color === 'b' ? '...' : '.'} ${game.moves[currentIndex].san}`
@@ -165,7 +172,7 @@ export function GameReview({ game, onReset }: GameReviewProps) {
             {formatGameTitle(game.headers)}
           </h2>
           <p className="text-xs text-gray-500 font-display">{getOpeningName(game.headers)}</p>
-          <div className="flex gap-6 mt-3">
+          <div className="mt-3 flex flex-wrap gap-4 sm:gap-6">
             <InfoPill label="Result" value={result} />
             {game.headers['TimeControl'] && (
               <InfoPill label="Time" value={formatTimeControl(game.headers['TimeControl'])} />
@@ -175,7 +182,7 @@ export function GameReview({ game, onReset }: GameReviewProps) {
 
           {/* Per-player accuracy summary (once analysis done) */}
           {!isAnalyzing && moveEvals.some(Boolean) && (
-            <div className="mt-3 pt-3 border-t border-replab-border flex gap-6">
+            <div className="mt-3 flex flex-wrap gap-4 border-t border-replab-border pt-3 sm:gap-6">
               <AccuracySummary label={whitePlayer} counts={whiteCounts} />
               <AccuracySummary label={blackPlayer} counts={blackCounts} />
             </div>
@@ -191,7 +198,7 @@ export function GameReview({ game, onReset }: GameReviewProps) {
           <p className="text-xs text-gray-500 font-display uppercase tracking-wider mb-3 px-1">
             Move list
           </p>
-          <div className="move-list overflow-y-auto max-h-[420px] pr-1">
+          <div className="move-list max-h-[min(50vh,420px)] overflow-y-auto pr-1 sm:max-h-[420px]">
             {movePairs.map((pair) => (
               <div key={pair.num} className="flex items-center gap-1 mb-0.5">
                 <span className="text-xs text-gray-600 font-display w-7 text-right shrink-0">
@@ -220,7 +227,7 @@ export function GameReview({ game, onReset }: GameReviewProps) {
           </div>
         </div>
 
-        <p className="text-xs text-gray-600 font-display text-center">
+        <p className="hidden text-center font-display text-xs text-gray-600 sm:block">
           ← → navigate · ↑ start · ↓ end
         </p>
       </div>

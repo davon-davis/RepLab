@@ -54,7 +54,7 @@ export function PgnImport({ onGameLoaded }: PgnImportProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       {/* Drop zone */}
       <div
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
@@ -62,7 +62,7 @@ export function PgnImport({ onGameLoaded }: PgnImportProps) {
         onDrop={handleDrop}
         onClick={() => fileRef.current?.click()}
         className={`
-          border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all
+          cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-all sm:p-10
           ${isDragging
             ? 'border-replab-accent bg-replab-accent/10'
             : 'border-replab-border hover:border-replab-accent/50 hover:bg-replab-surface/50'
@@ -106,13 +106,13 @@ export function PgnImport({ onGameLoaded }: PgnImportProps) {
         )}
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
         <button
           onClick={() => pgn.trim() && handleLoad(pgn)}
           disabled={!pgn.trim()}
-          className="flex-1 py-3 px-6 bg-replab-accent hover:bg-replab-accent/80
-                     disabled:bg-replab-surface disabled:text-gray-600 disabled:cursor-not-allowed
-                     text-white font-display font-medium rounded-lg transition-colors"
+          className="flex-1 rounded-lg bg-replab-accent px-6 py-3 font-display font-medium text-white
+                     transition-colors hover:bg-replab-accent/80 disabled:cursor-not-allowed
+                     disabled:bg-replab-surface disabled:text-gray-600"
         >
           Load Game
         </button>
@@ -121,8 +121,8 @@ export function PgnImport({ onGameLoaded }: PgnImportProps) {
             setPgn(SAMPLE_PGN)
             handleLoad(SAMPLE_PGN)
           }}
-          className="py-3 px-4 border border-replab-border hover:border-replab-accent/50
-                     text-gray-400 hover:text-gray-200 font-display text-sm rounded-lg transition-colors"
+          className="rounded-lg border border-replab-border px-4 py-3 font-display text-sm text-gray-400
+                     transition-colors hover:border-replab-accent/50 hover:text-gray-200"
         >
           Try sample
         </button>

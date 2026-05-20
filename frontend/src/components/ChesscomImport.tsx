@@ -122,25 +122,25 @@ export function ChesscomImport({ onGameLoaded }: ChesscomImportProps) {
     : games.filter(g => g.timeClass === timeClass)
 
   return (
-    <div className="flex flex-col gap-5 max-w-2xl mx-auto">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
       {/* Username input */}
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           type="text"
           value={username}
           onChange={e => setUsername(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleVerify()}
           placeholder="Chess.com username"
-          className="flex-1 bg-replab-surface border border-replab-border rounded-lg px-4 py-2.5
+          className="min-w-0 flex-1 rounded-lg border border-replab-border bg-replab-surface px-4 py-2.5
                      font-display text-sm text-gray-200 placeholder:text-gray-600
-                     focus:outline-none focus:border-replab-accent"
+                     focus:border-replab-accent focus:outline-none"
         />
         <button
           onClick={handleVerify}
           disabled={verifying || !username.trim()}
-          className="px-5 py-2.5 bg-replab-accent hover:bg-replab-accent/80
-                     disabled:bg-replab-surface disabled:text-gray-600 disabled:cursor-not-allowed
-                     text-white font-display font-medium text-sm rounded-lg transition-colors min-w-[80px]"
+          className="rounded-lg bg-replab-accent px-5 py-2.5 font-display text-sm font-medium text-white
+                     transition-colors hover:bg-replab-accent/80 disabled:cursor-not-allowed
+                     disabled:bg-replab-surface disabled:text-gray-600 sm:min-w-[80px]"
         >
           {verifying ? '···' : 'Verify'}
         </button>
@@ -168,25 +168,24 @@ export function ChesscomImport({ onGameLoaded }: ChesscomImportProps) {
           </div>
 
           {/* Month + time class filters */}
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex flex-col gap-3">
             <select
               value={selectedArchive}
               onChange={e => handleArchiveChange(e.target.value)}
-              className="flex-1 min-w-[160px] bg-replab-surface border border-replab-border rounded-lg
-                         px-3 py-2 font-display text-sm text-gray-200
-                         focus:outline-none focus:border-replab-accent"
+              className="w-full rounded-lg border border-replab-border bg-replab-surface px-3 py-2
+                         font-display text-sm text-gray-200 focus:border-replab-accent focus:outline-none"
             >
               {archives.map(arc => (
                 <option key={arc} value={arc}>{archiveToLabel(arc)}</option>
               ))}
             </select>
 
-            <div className="flex gap-1">
+            <div className="-mx-1 flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {(['all', 'bullet', 'blitz', 'rapid', 'daily'] as TimeClass[]).map(tc => (
                 <button
                   key={tc}
                   onClick={() => setTimeClass(tc)}
-                  className={`px-2.5 py-1.5 text-xs font-display rounded-lg capitalize transition-colors
+                  className={`shrink-0 rounded-lg px-2.5 py-1.5 font-display text-xs capitalize transition-colors
                     ${timeClass === tc
                       ? 'bg-replab-accent text-white'
                       : 'border border-replab-border text-gray-400 hover:text-gray-200 hover:border-replab-accent/50'
@@ -216,44 +215,47 @@ export function ChesscomImport({ onGameLoaded }: ChesscomImportProps) {
           )}
 
           {filteredGames.length > 0 && (
-            <div className="flex flex-col gap-1 max-h-80 overflow-y-auto pr-1">
+            <div className="flex max-h-[min(60vh,320px)] flex-col gap-1 overflow-y-auto pr-1 sm:max-h-80">
               {filteredGames.map(game => (
                 <button
                   key={game.uuid}
                   onClick={() => handleLoadGame(game)}
                   disabled={loadingGame === game.uuid}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-replab-surface
-                             border border-replab-border hover:border-replab-accent/50
-                             transition-all text-left group disabled:opacity-50"
+                  className="group flex items-start gap-2 rounded-lg border border-replab-border bg-replab-surface
+                             px-3 py-2.5 text-left transition-all hover:border-replab-accent/50
+                             disabled:opacity-50 sm:items-center sm:gap-3"
                 >
-                  <span className={`text-sm font-display font-bold w-4 shrink-0 ${RESULT_COLOR[game.result]}`}>
+                  <span className={`w-4 shrink-0 font-display text-sm font-bold ${RESULT_COLOR[game.result]}`}>
                     {RESULT_LABEL[game.result]}
                   </span>
 
-                  <span className={`text-xs font-display w-3 shrink-0 ${
+                  <span className={`w-3 shrink-0 font-display text-xs ${
                     game.color === 'white' ? 'text-gray-300' : 'text-gray-600'
                   }`}>
                     {game.color === 'white' ? '○' : '●'}
                   </span>
 
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-sm font-display text-gray-200 truncate">
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate font-display text-sm text-gray-200">
                       vs {game.opponentUsername}
-                      <span className="text-gray-500 text-xs ml-1.5">({game.opponentRating})</span>
+                      <span className="ml-1.5 text-xs text-gray-500">({game.opponentRating})</span>
                     </span>
-                    <span className="text-xs font-display text-gray-500 truncate capitalize">
+                    <span className="block truncate font-display text-xs capitalize text-gray-500">
                       {game.opening}
+                    </span>
+                    <span className="mt-0.5 font-display text-xs text-gray-600 sm:hidden">
+                      {game.timeClass} · {new Date(game.endTime * 1000).toLocaleDateString()}
                     </span>
                   </div>
 
-                  <div className="flex flex-col items-end shrink-0 gap-0.5">
-                    <span className="text-xs font-display text-gray-500 capitalize">{game.timeClass}</span>
-                    <span className="text-xs font-display text-gray-600">
+                  <div className="hidden shrink-0 flex-col items-end gap-0.5 sm:flex">
+                    <span className="font-display text-xs capitalize text-gray-500">{game.timeClass}</span>
+                    <span className="font-display text-xs text-gray-600">
                       {new Date(game.endTime * 1000).toLocaleDateString()}
                     </span>
                   </div>
 
-                  <span className="text-xs text-replab-accent opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                  <span className="shrink-0 font-display text-xs text-replab-accent sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
                     Load →
                   </span>
                 </button>
