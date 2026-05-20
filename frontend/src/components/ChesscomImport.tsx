@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { parsePgn, type ParsedGame } from '../utils/chess'
 import {
   verifyProfile,
@@ -9,6 +9,10 @@ import {
   type ChesscomProfile,
   type ChesscomGameSummary,
 } from '../api/chesscom'
+import {
+  getSavedChesscomUsername,
+  saveChesscomUsername,
+} from '../lib/chesscomStorage'
 
 interface ChesscomImportProps {
   onGameLoaded: (game: ParsedGame) => void
@@ -28,7 +32,7 @@ const RESULT_LABEL: Record<ChesscomGameSummary['result'], string> = {
 }
 
 export function ChesscomImport({ onGameLoaded }: ChesscomImportProps) {
-  const [username, setUsername] = useState('')
+  const [username, setUsername] = useState(() => getSavedChesscomUsername())
   const [profile, setProfile] = useState<ChesscomProfile | null>(null)
   const [archives, setArchives] = useState<string[]>([])
   const [selectedArchive, setSelectedArchive] = useState('')
@@ -38,6 +42,7 @@ export function ChesscomImport({ onGameLoaded }: ChesscomImportProps) {
   const [gamesLoading, setGamesLoading] = useState(false)
   const [error, setError] = useState('')
   const [loadingGame, setLoadingGame] = useState<string | null>(null)
+  const [restored, setRestored] = useState(false)
 
   async function loadGamesForArchive(uname: string, archiveUrl: string) {
     setGamesLoading(true)
@@ -53,9 +58,7 @@ export function ChesscomImport({ onGameLoaded }: ChesscomImportProps) {
     }
   }
 
-  async function handleVerify() {
-    const uname = username.trim()
-    if (!uname) return
+  const verifyUser = useCallback(async (uname: string) => {
     setVerifying(true)
     setError('')
     setProfile(null)
@@ -69,6 +72,8 @@ export function ChesscomImport({ onGameLoaded }: ChesscomImportProps) {
       const newest = [...arcs].reverse()
       setProfile(prof)
       setArchives(newest)
+      setUsername(prof.username)
+      saveChesscomUsername(prof.username)
       if (newest.length > 0) {
         setSelectedArchive(newest[0])
         await loadGamesForArchive(prof.username, newest[0])
@@ -78,7 +83,21 @@ export function ChesscomImport({ onGameLoaded }: ChesscomImportProps) {
     } finally {
       setVerifying(false)
     }
+  }, [])
+
+  async function handleVerify() {
+    const uname = username.trim()
+    if (!uname) return
+    await verifyUser(uname)
   }
+
+  useEffect(() => {
+    if (restored) return
+    setRestored(true)
+    const saved = getSavedChesscomUsername().trim()
+    if (!saved) return
+    void verifyUser(saved)
+  }, [restored, verifyUser])
 
   async function handleArchiveChange(archiveUrl: string) {
     setSelectedArchive(archiveUrl)
