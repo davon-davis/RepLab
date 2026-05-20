@@ -28,6 +28,10 @@ export function Header() {
             Game Review
           </NavLink>
 
+          <NavLink to="/openings" className={navLinkClass}>
+            Openings
+          </NavLink>
+
           <button
             disabled
             className="cursor-not-allowed rounded-lg px-3 py-1.5 font-display text-sm text-gray-600"
@@ -35,10 +39,6 @@ export function Header() {
           >
             Drills <span className="ml-1 text-xs opacity-40">soon</span>
           </button>
-
-          <NavLink to="/openings" className={navLinkClass}>
-            Openings
-          </NavLink>
 
           <button
             disabled
