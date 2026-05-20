@@ -1,0 +1,12 @@
+{
+  "name": "replab",
+  "private": true,
+  "scripts": {
+    "build": "npm run build --prefix frontend",
+    "deploy": "wrangler deploy",
+    "dev:worker": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.93.0"
+  }
+}

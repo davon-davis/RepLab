@@ -1,4 +1,7 @@
-const BASE = 'http://localhost:3001/api/chesscom'
+const BASE =
+  typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:3001/api/chesscom'
+    : '/api/chesscom'
 
 export interface ChesscomProfile {
   username: string
