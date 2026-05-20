@@ -3,6 +3,8 @@
   "private": true,
   "scripts": {
     "build": "npm run build --prefix frontend",
+    "format": "npm run format --prefix frontend",
+    "format:check": "npm run format:check --prefix frontend",
     "deploy": "wrangler deploy",
     "dev:worker": "wrangler dev"
   },
