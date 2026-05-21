@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useBoardWidth } from '../hooks/useBoardWidth'
-import { Chess } from 'chess.js'
+import { Chess, type Square as ChessSquare } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import type { Opening } from '../utils/chess/openings'
+import { buildMoveHintStyles, isPlayersPiece } from '../utils/chess/moveHints'
 import { useAiExplanation } from '../hooks/useAiExplanation'
 
 interface OpeningDrillProps {
@@ -27,8 +28,11 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
   const [hintRequested, setHintRequested] = useState(false)
   const [completedMoves, setCompletedMoves] = useState(0)
   const [shake, setShake] = useState(false)
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
 
   const { explanation, loading: explanationLoading, explain, clear } = useAiExplanation()
+
+  const clearSelection = useCallback(() => setSelectedSquare(null), [])
 
   const opponentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -44,9 +48,10 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
       setMoveIndex(atIndex + 1)
       setDrillState('waiting')
       setHintRequested(false)
+      clearSelection()
       clear()
     }, 600)
-  }, [chess, line, clear])
+  }, [chess, line, clear, clearSelection])
 
   // Init: if black, opponent goes first
   useEffect(() => {
@@ -55,6 +60,7 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
     setMoveIndex(0)
     setDrillState('waiting')
     setCompletedMoves(0)
+    clearSelection()
     clear()
 
     if (playingAs === 'black' && line.opponentMoves.includes(0)) {
@@ -62,29 +68,24 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
     }
   }, [opening.id, line.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handlePieceDrop(from: string, to: string): boolean {
-    if (drillState !== 'waiting') return false
-    if (!isPlayerMove(moveIndex)) return false
-
+  function tryPlayerMove(from: string, to: string): boolean {
     const expectedSan = line.moves[moveIndex]
     const move = chess.move({ from, to, promotion: 'q' })
-
     if (!move) return false
 
     if (move.san === expectedSan || moveMatchesSan(move, expectedSan, chess)) {
-      // Correct!
       setFen(chess.fen())
       setDrillState('correct')
-      setCompletedMoves(c => c + 1)
+      setCompletedMoves((c) => c + 1)
       setWrongSquares({})
+      clearSelection()
 
-      const prevMoves = line.moves.slice(0, moveIndex)
       explain({
         openingName: opening.name,
         playingAs,
         moveSan: move.san,
         moveNumber: Math.floor(moveIndex / 2) + 1,
-        previousMoves: prevMoves,
+        previousMoves: line.moves.slice(0, moveIndex),
         isHint: false,
       })
 
@@ -98,17 +99,55 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
           playOpponentMove(nextIdx)
         }, 800)
       }
-
       return true
-    } else {
-      // Wrong move
-      chess.undo()
-      setShake(true)
-      setTimeout(() => setShake(false), 500)
-      setDrillState('wrong')
-      setTimeout(() => setDrillState('waiting'), 1200)
-      return false
     }
+
+    chess.undo()
+    clearSelection()
+    setShake(true)
+    setTimeout(() => setShake(false), 500)
+    setDrillState('wrong')
+    setTimeout(() => setDrillState('waiting'), 1200)
+    return false
+  }
+
+  function handlePieceDrop(from: string, to: string): boolean {
+    if (drillState !== 'waiting') return false
+    if (!isPlayerMove(moveIndex)) return false
+    clearSelection()
+    return tryPlayerMove(from, to)
+  }
+
+  function handleSquareClick(square: string, piece: string | undefined) {
+    if (drillState !== 'waiting' || !isPlayerMove(moveIndex)) return
+
+    if (selectedSquare === square) {
+      clearSelection()
+      return
+    }
+
+    // Click any of your pieces — switch selection and show that piece's move hints
+    if (isPlayersPiece(piece, playingAs)) {
+      const moves = chess.moves({ square: square as ChessSquare, verbose: true })
+      if (moves.length > 0) setSelectedSquare(square)
+      else clearSelection()
+      return
+    }
+
+    if (selectedSquare) {
+      const legalTargets = chess.moves({
+        square: selectedSquare as ChessSquare,
+        verbose: true,
+      })
+      if (legalTargets.some((m) => m.to === square)) {
+        tryPlayerMove(selectedSquare, square)
+      } else {
+        clearSelection()
+      }
+      return
+    }
+
+    clearSelection()
   }
 
   function handleHint() {
@@ -132,12 +171,27 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
     setCompletedMoves(0)
     setHintRequested(false)
     setWrongSquares({})
+    clearSelection()
     clear()
 
     if (playingAs === 'black' && line.opponentMoves.includes(0)) {
       playOpponentMove(0)
     }
   }
+
+  const moveHintStyles = useMemo(() => {
+    if (
+      drillState !== 'waiting' ||
+      !isPlayerMove(moveIndex) ||
+      !selectedSquare
+    ) {
+      return {}
+    }
+    return buildMoveHintStyles(
+      chess.moves({ square: selectedSquare as ChessSquare, verbose: true }),
+      selectedSquare,
+    )
+  }, [chess, fen, drillState, moveIndex, selectedSquare, isPlayerMove])
 
   const totalPlayerMoves = line.playerMoves.length
   const progress = Math.round((completedMoves / totalPlayerMoves) * 100)
@@ -181,7 +235,12 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
             position={fen}
             boardOrientation={boardOrientation}
             onPieceDrop={handlePieceDrop}
-            customSquareStyles={{ ...lastMoveHighlight, ...wrongSquares }}
+            onSquareClick={handleSquareClick}
+            customSquareStyles={{
+              ...lastMoveHighlight,
+              ...wrongSquares,
+              ...moveHintStyles,
+            }}
             customDarkSquareStyle={{ backgroundColor: '#769656' }}
             customLightSquareStyle={{ backgroundColor: '#eeeed2' }}
             arePiecesDraggable={drillState === 'waiting'}
