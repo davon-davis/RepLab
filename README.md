@@ -74,7 +74,7 @@ frontend/
     hooks/
       useAnalysis.ts            # Stockfish full-game analysis (priority queue)
       useLiveEval.ts            # Single-position live eval
-      useAiExplanation.ts       # Claude API — move hints and explanations
+      useOpeningExplanation.ts  # Plain-English move hints and feedback
     utils/
       chess/
         index.ts                # PGN parser, chess utilities

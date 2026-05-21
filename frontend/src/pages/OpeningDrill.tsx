@@ -4,7 +4,11 @@ import { Chess, type Square as ChessSquare } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import type { Opening } from '../utils/chess/openings'
 import { buildMoveHintStyles, isPlayersPiece } from '../utils/chess/moveHints'
-import { useAiExplanation } from '../hooks/useAiExplanation'
+import {
+  buildLocalOpeningHint,
+  buildLocalMoveFeedback,
+} from '../utils/chess/openingHint'
+import { useOpeningExplanation } from '../hooks/useOpeningExplanation'
 
 interface OpeningDrillProps {
   opening: Opening
@@ -30,7 +34,7 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
   const [shake, setShake] = useState(false)
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
 
-  const { explanation, loading: explanationLoading, explain, clear } = useAiExplanation()
+  const { explanation, show: showExplanation, clear } = useOpeningExplanation()
 
   const clearSelection = useCallback(() => setSelectedSquare(null), [])
 
@@ -70,6 +74,7 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
 
   function tryPlayerMove(from: string, to: string): boolean {
     const expectedSan = line.moves[moveIndex]
+    const fenBefore = chess.fen()
     const move = chess.move({ from, to, promotion: 'q' })
     if (!move) return false
 
@@ -80,14 +85,9 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
       setWrongSquares({})
       clearSelection()
 
-      explain({
-        openingName: opening.name,
-        playingAs,
-        moveSan: move.san,
-        moveNumber: Math.floor(moveIndex / 2) + 1,
-        previousMoves: line.moves.slice(0, moveIndex),
-        isHint: false,
-      })
+      showExplanation(
+        buildLocalMoveFeedback(fenBefore, move.san, opening.name),
+      )
 
       const nextIdx = moveIndex + 1
       if (nextIdx >= line.moves.length) {
@@ -151,15 +151,11 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
   }
 
   function handleHint() {
+    if (!isPlayerMove(moveIndex)) return
+
     setHintRequested(true)
-    explain({
-      openingName: opening.name,
-      playingAs,
-      moveSan: line.moves[moveIndex],
-      moveNumber: Math.floor(moveIndex / 2) + 1,
-      previousMoves: line.moves.slice(0, moveIndex),
-      isHint: true,
-    })
+    const expectedSan = line.moves[moveIndex]
+    showExplanation(buildLocalOpeningHint(chess.fen(), expectedSan))
   }
 
   function handleReset() {
@@ -260,7 +256,7 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={handleHint}
-            disabled={drillState !== 'waiting' || hintRequested || explanationLoading}
+            disabled={drillState !== 'waiting' || !isPlayerMove(moveIndex)}
             className="min-w-[calc(50%-0.25rem)] flex-1 rounded-lg border border-replab-accent/40 px-4 py-2.5 font-display text-sm text-replab-accent transition-all hover:border-replab-accent hover:bg-replab-accent/10 disabled:cursor-not-allowed disabled:opacity-40 sm:min-w-0"
           >
             💡 Hint
@@ -327,8 +323,6 @@ export function OpeningDrill({ opening, onBack }: OpeningDrillProps) {
             <WrongState />
           ) : drillState === 'opponent' ? (
             <OpponentState />
-          ) : explanationLoading ? (
-            <LoadingExplanation isHint={hintRequested} />
           ) : explanation ? (
             <ExplanationState text={explanation} isHint={hintRequested} />
           ) : (
@@ -401,24 +395,6 @@ function ExplanationState({ text, isHint }: { text: string; isHint: boolean }) {
         </span>
       </div>
       <p className="text-gray-200 font-display text-sm leading-relaxed">{text}</p>
-    </div>
-  )
-}
-
-function LoadingExplanation({ isHint }: { isHint: boolean }) {
-  return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-base">{isHint ? '💡' : '✅'}</span>
-        <span className="text-xs font-display font-medium text-gray-400 uppercase tracking-wider">
-          {isHint ? 'Getting hint...' : 'Analyzing...'}
-        </span>
-      </div>
-      <div className="space-y-2">
-        <div className="h-3 bg-replab-border rounded animate-pulse w-full" />
-        <div className="h-3 bg-replab-border rounded animate-pulse w-4/5" />
-        <div className="h-3 bg-replab-border rounded animate-pulse w-3/5" />
-      </div>
     </div>
   )
 }

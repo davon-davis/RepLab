@@ -33,15 +33,19 @@ async function handleChesscom(request: Request, url: URL): Promise<Response> {
 
     const archivesMatch = path.match(/^\/player\/([^/]+)\/archives$/)
     if (archivesMatch) {
-      const data = await chesscomFetch(`/player/${archivesMatch[1]}/games/archives`)
+      const data = await chesscomFetch<{ archives: string[] }>(
+        `/player/${archivesMatch[1]}/games/archives`,
+      )
       return json({ archives: data.archives })
     }
 
     const gamesMatch = path.match(/^\/player\/([^/]+)\/games\/(\d{4})\/(\d{1,2})$/)
     if (gamesMatch) {
       const [, username, year, month] = gamesMatch
-      const data = await chesscomFetch(`/player/${username}/games/${year}/${month}`)
-      const games = (data.games ?? []).map((game: ChesscomGame) =>
+      const data = await chesscomFetch<{ games: ChesscomGame[] }>(
+        `/player/${username}/games/${year}/${month}`,
+      )
+      const games = (data.games ?? []).map((game) =>
         summarizeGame(game, username),
       )
       return json({ games })
@@ -63,14 +67,14 @@ class ChesscomError extends Error {
   }
 }
 
-async function chesscomFetch(path: string) {
+async function chesscomFetch<T>(path: string): Promise<T> {
   const res = await fetch(`${CHESSCOM_BASE}${path}`, {
     headers: { 'User-Agent': USER_AGENT },
   })
   if (!res.ok) {
     throw new ChesscomError(`Chess.com API error: ${res.status}`, res.status)
   }
-  return res.json()
+  return res.json() as Promise<T>
 }
 
 interface ChesscomGame {
